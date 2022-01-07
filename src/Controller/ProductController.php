@@ -52,6 +52,16 @@ class ProductController extends AbstractController
     }
 
     /**
+     * @Route("/table", name="products_table")
+     * 
+     */
+    public function table(Request $request, PaginatorInterface $paginator): JsonResponse
+    {
+        $listado = $this->entityManager->getRepository(Product::class)->getItemsTable($request, $paginator);
+        return new JsonResponse($listado);
+    }
+
+    /**
      * @Route("/new", name="create_product")
      */
     public function createProduct(Request $request): Response

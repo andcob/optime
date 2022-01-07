@@ -3,9 +3,8 @@
 {% block title %}Product Index{% endblock %}
 
 {% block body %}
-<div class="text-end">
-    <a href="{{ path('create_product') }}" class="btn btn-primary" tabindex="-1" role="button">Add Product</a>
-</div>
+
+<!-- Simple Table begin 
 
 <div class="table-responsive">
         
@@ -50,12 +49,101 @@
     {{ knp_pagination_render(products) }}
 </div>
 
+Simple Table End-->
+<div class="text-end">
+    <a href="{{ path('create_product') }}" class="btn btn-primary" tabindex="-1" role="button">Add Product</a>
+</div>
+
+{{ include('product/_filtros.html.twig', {} ) }}
+
+<div class="row mt-1">
+    <div class="col-12">
+        <div class="table-responsive" style="width: 100%;"> 
+            <table id="products-table" class="table border table-hover border-secondary display bg-white  table-striped" style="width:100%">
+                <thead class="thead-light" >
+                    <tr>
+                        <th scope="col" class="align-middle">Code</th>
+                        <th scope="col" class="align-middle">Name</th>
+                        <th scope="col" class="align-middle">Brand</th>
+                        <th scope="col" class="align-middle">Price</th>
+                        <th scope="col" class="align-middle">Description</th>            
+                        <th scope="col" class="align-middle">Created At</th>
+                        <th scope="col" class="align-middle">Updated At</th>            
+                        <th scope="col" class="align-middle">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>  
+
+                </tbody>                   
+            </table>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
 
     <script>
         
+        let tablaObj;
+        const tablaId = '#products-table';
+        
+        $(document).ready(function() {
+            tablaObj = $(tablaId).DataTable( {               
+                "ajax": "{{ path('products_table') }}",
+                "columns": [                   
+                    { "data": "code", "className": "dt-left", },                    
+                    { "data": "name", "className": ""},
+                    { "data": "brand", "className": ""},
+                    { "data": "price", "className": ""},
+                    { 
+                        sortable: false,
+                        "render": function ( data, type, full, meta ) {
+                            const res = (full.description.length > 30) ? full.description.substring(0,30)+'...' : full.description;
+                            return res
+                        }
+                    },
+                    { "data": "createdAt", "className": ""},
+                    { "data": "updatedAt", "className": ""},                                                          
+                    {
+                        sortable: false,
+                        "render": function ( data, type, full, meta ) {  
+                            const route = "{{ path('product_index') }}";                      
+                            let res = '<div  class="mt-0">';
+                                res +=      '<a class="btn btn-info btn-sm text-center" href="'+route+full.id+'" title="View">View</a>  ';
+                                res +=      '<a class="btn btn-primary btn-sm text-center" href="'+route+'edit/'+full.id+'" title="Edit">Edit</a>  ';
+                                res +=      '<a class="btn btn-danger btn-sm text-center" onclick="btn_delete('+full.id+', this)"  href="#" title="Delete">Delete</a>';
+                                res += '</div>';
+                            return res;
+                        },
+                        "width":"140px"
+                    },                        
+                ],
+                "responsive": true,
+                "processing": true,
+                "serverSide": true,               
+                "pageLength": 2, 
+                lengthMenu: [
+                    [ 2, 5, 10 ],
+                    [ '2', '5', '10', 'All' ]
+                ],                
+                "order": [ 1, 'asc' ]    
+            });
+
+             // Filter event handle      
+            $( '.filtros input, .filtros select').change(function() {                     
+                tablaObj.column( $(this).data('index') )
+                    .search( this.value, $(this).prop("type"))
+                    .draw();
+            });
+
+            $( '.filtros #btn_reset').click(function() { 
+                $( '.filtros input, .filtros select').val('');
+                tablaObj.search('').columns().search('').draw();
+            }); 
+
+        });
 
         function btn_delete(id, obj){           
                         
@@ -76,6 +164,7 @@
                         data: {},                
                         success: function (data) {                            
                             window.location.href = "{{ path('product_index') }}"; 
+                            //tablaObj.ajax.reload(null, false);
                         },
                         error: function (error) {
                             console.log('error' + error);
